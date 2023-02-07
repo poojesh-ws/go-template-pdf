@@ -8,9 +8,7 @@ on:
     branches:
       - main
 
-
 jobs:
-
   lint-test-build:
     runs-on: ubuntu-latest
     steps:
@@ -31,9 +29,9 @@ jobs:
 
       - uses: pre-commit/action@v3.0.0
       - name: Build
-        run:  go build ./...
+        run: go build ./...
       - name: Test
-        run:  ./scripts/test.sh
+        run: ./scripts/test.sh
       - uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -43,7 +41,7 @@ jobs:
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >

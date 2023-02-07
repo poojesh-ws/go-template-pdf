@@ -1,0 +1,4 @@
+input PdfInput {
+  name: String!
+  body: String!
+}

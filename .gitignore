@@ -8,3 +8,4 @@ output
 .env.develop
 .env.qa
 .env
+outputPdf

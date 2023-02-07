@@ -59,6 +59,7 @@ type ComplexityRoot struct {
 		CreateRole     func(childComplexity int, input RoleCreateInput) int
 		CreateUser     func(childComplexity int, input UserCreateInput) int
 		DeleteUser     func(childComplexity int) int
+		GeneratePDF    func(childComplexity int) int
 		Login          func(childComplexity int, username string, password string) int
 		RefreshToken   func(childComplexity int, token string) int
 		UpdateUser     func(childComplexity int, input *UserUpdateInput) int
@@ -144,6 +145,7 @@ type MutationResolver interface {
 	Login(ctx context.Context, username string, password string) (*LoginResponse, error)
 	ChangePassword(ctx context.Context, oldPassword string, newPassword string) (*ChangePasswordResponse, error)
 	RefreshToken(ctx context.Context, token string) (*RefreshTokenResponse, error)
+	GeneratePDF(ctx context.Context) (string, error)
 	CreateRole(ctx context.Context, input RoleCreateInput) (*RolePayload, error)
 	CreateUser(ctx context.Context, input UserCreateInput) (*User, error)
 	UpdateUser(ctx context.Context, input *UserUpdateInput) (*User, error)
@@ -235,6 +237,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteUser(childComplexity), true
+
+	case "Mutation.generatePdf":
+		if e.complexity.Mutation.GeneratePDF == nil {
+			break
+		}
+
+		return e.complexity.Mutation.GeneratePDF(childComplexity), true
 
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
@@ -541,6 +550,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputFloatFilter,
 		ec.unmarshalInputIDFilter,
 		ec.unmarshalInputIntFilter,
+		ec.unmarshalInputPdfInput,
 		ec.unmarshalInputRoleCreateInput,
 		ec.unmarshalInputRoleFilter,
 		ec.unmarshalInputRolePagination,
@@ -694,6 +704,15 @@ input BooleanFilter {
     isFalse: Boolean
     isNull: Boolean
 }`, BuiltIn: false},
+	{Name: "../schema/pdf.graphql", Input: `input PdfInput {
+  name: String!
+  body: String!
+}
+`, BuiltIn: false},
+	{Name: "../schema/pdf_mutations.graphql", Input: `extend type Mutation {
+  generatePdf: String!
+}
+`, BuiltIn: false},
 	{Name: "../schema/role.graphql", Input: `type Role {
     id: ID!
     accessLevel: Int!
@@ -1364,6 +1383,50 @@ func (ec *executionContext) fieldContext_Mutation_refreshToken(ctx context.Conte
 	if fc.Args, err = ec.field_Mutation_refreshToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_generatePdf(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_generatePdf(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().GeneratePDF(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_generatePdf(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -5595,6 +5658,42 @@ func (ec *executionContext) unmarshalInputIntFilter(ctx context.Context, obj int
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputPdfInput(ctx context.Context, obj interface{}) (PDFInput, error) {
+	var it PDFInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "body"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "body":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
+			it.Body, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputRoleCreateInput(ctx context.Context, obj interface{}) (RoleCreateInput, error) {
 	var it RoleCreateInput
 	asMap := map[string]interface{}{}
@@ -6559,6 +6658,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_refreshToken(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "generatePdf":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_generatePdf(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {

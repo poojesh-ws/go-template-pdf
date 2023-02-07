@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/99designs/gqlgen v0.17.13
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/SebastiaanKlippert/go-wkhtmltopdf v1.8.2
 	github.com/agiledragon/gomonkey/v2 v2.2.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/friendsofgo/errors v0.9.2

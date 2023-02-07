@@ -46,6 +46,11 @@ type LoginResponse struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
+type PDFInput struct {
+	Name string `json:"name"`
+	Body string `json:"body"`
+}
+
 type RefreshTokenResponse struct {
 	Token string `json:"token"`
 }
