@@ -2,14 +2,12 @@ package generatePdf
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"os"
 	"strconv"
 	"time"
 
 	wkhtmltopdf "github.com/SebastiaanKlippert/go-wkhtmltopdf"
-	"github.com/google/uuid"
 )
 
 func ParseTemplate(templatePath string) (string, error) {
@@ -24,7 +22,7 @@ func ParseTemplate(templatePath string) (string, error) {
 	return buf.String(), nil
 }
 
-func GeneratePDF(htmlBody string) error {
+func GeneratePDF(fileName, htmlBody string) error {
 	nowTime := time.Now().Unix()
 	// write whole the body
 
@@ -63,8 +61,7 @@ func GeneratePDF(htmlBody string) error {
 		return err
 	}
 
-	outputPdfPath := fmt.Sprintf("outputPdf/%s_%s.pdf", "testPdf", uuid.New().String())
-	err = pdfg.WriteFile(outputPdfPath)
+	err = pdfg.WriteFile(fileName)
 	if err != nil {
 		return err
 	}

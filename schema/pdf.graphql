@@ -2,3 +2,7 @@ input PdfInput {
   name: String!
   body: String!
 }
+
+type PdfGeneratedStatus {
+  status: String!
+}

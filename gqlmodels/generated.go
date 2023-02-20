@@ -65,9 +65,14 @@ type ComplexityRoot struct {
 		UpdateUser     func(childComplexity int, input *UserUpdateInput) int
 	}
 
+	PdfGeneratedStatus struct {
+		Status func(childComplexity int) int
+	}
+
 	Query struct {
-		Me    func(childComplexity int) int
-		Users func(childComplexity int, pagination *UserPagination) int
+		CheckPDFGenerated func(childComplexity int, fileName string) int
+		Me                func(childComplexity int) int
+		Users             func(childComplexity int, pagination *UserPagination) int
 	}
 
 	RefreshTokenResponse struct {
@@ -152,6 +157,7 @@ type MutationResolver interface {
 	DeleteUser(ctx context.Context) (*UserDeletePayload, error)
 }
 type QueryResolver interface {
+	CheckPDFGenerated(ctx context.Context, fileName string) (*PDFGeneratedStatus, error)
 	Me(ctx context.Context) (*User, error)
 	Users(ctx context.Context, pagination *UserPagination) (*UsersPayload, error)
 }
@@ -280,6 +286,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateUser(childComplexity, args["input"].(*UserUpdateInput)), true
+
+	case "PdfGeneratedStatus.status":
+		if e.complexity.PdfGeneratedStatus.Status == nil {
+			break
+		}
+
+		return e.complexity.PdfGeneratedStatus.Status(childComplexity), true
+
+	case "Query.checkPdfGenerated":
+		if e.complexity.Query.CheckPDFGenerated == nil {
+			break
+		}
+
+		args, err := ec.field_Query_checkPdfGenerated_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CheckPDFGenerated(childComplexity, args["fileName"].(string)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -708,9 +733,17 @@ input BooleanFilter {
   name: String!
   body: String!
 }
+
+type PdfGeneratedStatus {
+  status: String!
+}
 `, BuiltIn: false},
 	{Name: "../schema/pdf_mutations.graphql", Input: `extend type Mutation {
   generatePdf: String!
+}
+`, BuiltIn: false},
+	{Name: "../schema/pdf_queries.graphql", Input: `extend type Query {
+  checkPdfGenerated(fileName: String!): PdfGeneratedStatus!
 }
 `, BuiltIn: false},
 	{Name: "../schema/role.graphql", Input: `type Role {
@@ -1020,6 +1053,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_checkPdfGenerated_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["fileName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["fileName"] = arg0
 	return args, nil
 }
 
@@ -1712,6 +1760,109 @@ func (ec *executionContext) fieldContext_Mutation_deleteUser(ctx context.Context
 			}
 			return nil, fmt.Errorf("no field named %q was found under type UserDeletePayload", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PdfGeneratedStatus_status(ctx context.Context, field graphql.CollectedField, obj *PDFGeneratedStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PdfGeneratedStatus_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PdfGeneratedStatus_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PdfGeneratedStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_checkPdfGenerated(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_checkPdfGenerated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CheckPDFGenerated(rctx, fc.Args["fileName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*PDFGeneratedStatus)
+	fc.Result = res
+	return ec.marshalNPdfGeneratedStatus2ᚖgoᚑtemplateᚋgqlmodelsᚐPDFGeneratedStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_checkPdfGenerated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "status":
+				return ec.fieldContext_PdfGeneratedStatus_status(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PdfGeneratedStatus", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_checkPdfGenerated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -6719,6 +6870,34 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var pdfGeneratedStatusImplementors = []string{"PdfGeneratedStatus"}
+
+func (ec *executionContext) _PdfGeneratedStatus(ctx context.Context, sel ast.SelectionSet, obj *PDFGeneratedStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pdfGeneratedStatusImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PdfGeneratedStatus")
+		case "status":
+
+			out.Values[i] = ec._PdfGeneratedStatus_status(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -6738,6 +6917,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "checkPdfGenerated":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_checkPdfGenerated(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "me":
 			field := field
 
@@ -7668,6 +7870,20 @@ func (ec *executionContext) marshalNLoginResponse2ᚖgoᚑtemplateᚋgqlmodels�
 		return graphql.Null
 	}
 	return ec._LoginResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPdfGeneratedStatus2goᚑtemplateᚋgqlmodelsᚐPDFGeneratedStatus(ctx context.Context, sel ast.SelectionSet, v PDFGeneratedStatus) graphql.Marshaler {
+	return ec._PdfGeneratedStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPdfGeneratedStatus2ᚖgoᚑtemplateᚋgqlmodelsᚐPDFGeneratedStatus(ctx context.Context, sel ast.SelectionSet, v *PDFGeneratedStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PdfGeneratedStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRefreshTokenResponse2goᚑtemplateᚋgqlmodelsᚐRefreshTokenResponse(ctx context.Context, sel ast.SelectionSet, v RefreshTokenResponse) graphql.Marshaler {

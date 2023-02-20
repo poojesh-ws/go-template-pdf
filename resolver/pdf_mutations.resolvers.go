@@ -5,25 +5,24 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 	"go-template/internal/service/generatePdf"
+
+	"github.com/google/uuid"
 )
 
 var TEMPLATE_PATH = "pdftemplate/test.html"
 
 // GeneratePDF is the resolver for the generatePdf field.
 func (r *mutationResolver) GeneratePDF(ctx context.Context) (string, error) {
-
+	fileName := fmt.Sprintf("outputPdf/%s_%s.pdf", "testPdf", uuid.New().String())
 	htmlBody, err := generatePdf.ParseTemplate(TEMPLATE_PATH)
 
 	if err != nil {
 		return "", err
 	}
 
-	err = generatePdf.GeneratePDF(htmlBody)
+	go generatePdf.GeneratePDF(fileName, htmlBody)
 
-	if err != nil {
-		return "", err
-	}
-
-	return "Pdf generated", nil
+	return fmt.Sprintf("Pdf generating for name %s", fileName), nil
 }
